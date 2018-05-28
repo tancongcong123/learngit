@@ -1,0 +1,142 @@
+1 webview 内存泄漏
+  首先在布局文件中声明一个parent布局
+
+<LinearLayout    
+    android:id="@+id/web_view"   
+    android:layout_width="match_parent"    
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"   
+    android:scrollbars="none" />
+然后在代码中，把WebView当做其子View添加进去
+
+WebView webView = new WebView(context);
+webViewLayout.addView(webView);
+网上很多人说这个context应该用application的，我觉得是不对的，如果你的WebView需要弹出一个dialog呢？还有其他的不可预估的问题的，最好还是用当前的activity的Context是最合适的。
+上面说的是如何把WebView添加进来进行使用，然后到底它有哪些属性是我们在开发中需要使用到的呢？
+
+webView.loadUrl("www.baidu.com");//WebView加载的网页使用loadUrl
+WebSettings webSettings = webView.getSettings();//获得WebView的设置
+webSettings.setUseWideViewPort(true);// 设置此属性，可任意比例缩放
+webSettings.setLoadWithOverviewMode(true);//适配
+webSettings.setJavaScriptEnabled(true);  //支持js
+webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);  //设置 缓存模式
+webSettings.setDomStorageEnabled(true);// 开启 DOM storage API 功能
+webSettings.setDatabaseEnabled(true);//开启 database storage API 功能
+webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);//HTTPS，注意这个是在LOLLIPOP以上才调用的
+webSettings.setAppCacheEnabled(true);//开启 Application Caches 功能
+webSettings.setBlockNetworkImage(true);//关闭加载网络图片，在一开始加载的时候可以设置为true，当加载完网页的时候再设置为false
+上面是使用WebView中最基础的设置，相信在开发过程中都会进行如上的设置的。
+
+webView.setWebChromeClient(new WebChromeClient() {    
+     @Override   
+     public void onProgressChanged(WebView view, int newProgress) {
+         //加载的进度
+     }
+     @Override
+     public void onReceivedTitle(WebView view, String title) {   
+         //获取WebView的标题
+     }
+    @Override
+    public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {    
+        return super.onJsAlert(view, url, message, result);
+        //Js 弹框
+    }
+    @Override
+    public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {   
+        AlertDialog.Builder b = new AlertDialog.Builder(IllegalQueryActivity.this);    
+        b.setTitle("删除");    
+        b.setMessage(message);    
+        b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {        
+            @Override        
+            public void onClick(DialogInterface dialog, int which) {            
+                result.confirm();        
+            }    
+        });    
+        b.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {        
+            @Override        
+            public void onClick(DialogInterface dialog, int which) {            
+                result.cancel();        
+            }    
+        });    
+        b.create().show();    
+        return true;
+    }
+});
+webView.setWebViewClient(new WebViewClient() {    
+    @Override    
+    public boolean shouldOverrideUrlLoading(WebView view, String url) {        
+       //需要设置在当前WebView中显示网页，才不会跳到默认的浏览器进行显示
+       return true;   
+    }    
+    @Override    
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        //加载出错了
+    }   
+    @Override    
+    public void onPageFinished(WebView view, String url) {        
+        super.onPageFinished(view, url);
+        //加载完成
+    }
+});
+webView.setDownloadListener(new DownLoadListener());//下载监听
+private class DownLoadListener implements DownloadListener {   
+    @Override   
+    public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {      
+
+    }
+}
+然后就是WebView跟JS的交互了
+
+webView.addJavascriptInterface(new WebAppInterface(this), "WebJs");
+public class WebAppInterface { 
+    Context mContext;    
+    public WebAppInterface(Context c) {        
+        mContext = c;    
+    }    
+    @JavascriptInterface    
+    public void method() {
+    }
+}
+webView.loadUrl("javascript:jsMethod()");//这是WebView最简单的调用JS的方法
+当activity执行生命周期的时候，这里需要注意的是在onDestroy的时候，需要销毁WebView，不然也会出现内存泄漏的。
+
+@Overrideprotected void onPause() {    
+    super.onPause();    
+    if (webView != null) {        
+        webView.onPause();    
+    }
+}
+@Override
+protected void onResume() {    
+    super.onResume();    
+    if (webView != null) {        
+        webView.onResume();    
+    }
+}
+@Override
+protected void onDestroy() {        
+    if (webView != null) {        
+        webView.clearCache(true); //清空缓存   
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {            
+            if (webViewLayout != null) {                
+                webViewLayout.removeView(webView);            
+            }            
+        webView.removeAllViews();            
+        webView.destroy();        
+    }else {            
+        webView.removeAllViews();            
+        webView.destroy();            
+        if (webViewLayout != null) {                
+            webViewLayout.removeView(webView);           
+        }        
+     }  
+     webView = null;    
+  }   
+}
+可以看到上面的onDestroy方法中对系统的版本进行了判断，那是因为我在不同的版本中进行了测试，如果低于5.0版本的WebView中，如果先在parent中remove了WebView，那WebView将无法进行destroy了，这样就会造成内存的泄漏，下来你们可以自己去尝试一下这个说法是不是正确的。
+
+2 webview加载有些页面空白
+webView = new MyWebView(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        llwebView.addView(webView,params);
