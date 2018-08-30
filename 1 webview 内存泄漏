@@ -140,3 +140,103 @@ protected void onDestroy() {
 webView = new MyWebView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         llwebView.addView(webView,params);
+
+3 压缩图片 先设置bitmap属性，位图颜色方式，大小等。再进行质量压缩。这样不会失真的太严重。
+private String compressImage(String filepath) {
+        try {
+            InputStream is = new FileInputStream(filepath);
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inTempStorage = new byte[100 * 1024];
+            // 3.设置位图颜色显示优化方式
+            opts.inPreferredConfig = Bitmap.Config.RGB_565;
+            // 4.设置图片可以被回收，创建Bitmap用于存储Pixel的内存空间在系统内存不足时可以被回收
+            opts.inPurgeable = true;
+            // 5.设置位图缩放比例
+            // width，hight设为原来的四分一（该参数请使用2的整数倍）,这也减小了位图占用的内存大小；
+            opts.inSampleSize = 4;
+            // 6.设置解码位图的尺寸信息
+            opts.inInputShareable = true;
+            // 7.解码位图
+            Bitmap image = BitmapFactory.decodeStream(is, null, opts);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            int options = 100;
+            while (baos.toByteArray().length / 1024 > 100) {    //循环判断如果压缩后图片是否大于100kb,大于继续压缩
+                baos.reset();//重置baos即清空baos
+                options -= 5;//每次都减少
+                image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
+            }
+            //压缩好后写入文件中
+            FileOutputStream fos = new FileOutputStream(filepath);
+            fos.write(baos.toByteArray());
+            fos.flush();
+            fos.close();
+            return filepath;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    4 Android studio error
+    Write access is allowed from event dispatch thread only
+    So the problem was concluded in that android studio conflicted with my installed jdk version, so it was resolved when i checked jdk location (File -> Project Structure -> SDK Location), ticked 'Use embedded JDK' checkbox and set jdk location to 'path to android studio'\Android Studio\jre
+
+    5 android studio 找不到符号 getContext()
+    导入了android-support-v4.jar包，导致AndroidStudio引用了错误的类，删除该包，完美解决
+
+    6 android.view.inflateexception binary xml file line
+    自定义view
+    总之抛出这种异常的原因有可能是必须实现的构造器没有实现：
+
+	须实现三个构造函数
+    public GalleryFlow(Context context) {
+            super(context);
+    }
+
+    public GalleryFlow(Context context, AttributeSet attrs) {
+            super(context, attrs);
+    }
+
+    public GalleryFlow(Context context, AttributeSet attrs, int defStyle) {
+            super(context, attrs, defStyle);
+    }
+
+    7 D:\androidstudio\jx_zhenedun4>adb shell getprop ro.product.cpu.abi
+      arm64-v8a
+
+      
+    8ConstraintLayout一行配置两个组件的时候，如果都是wrap_content，那么第一个如果太长就会把第二个挤掉，解决方法如下：
+•<TextView
+    android:id=“@+id/titleView”
+    android:layout_width=“0dp”  必须指定宽度为0，使得第一个textview自适应
+    android:layout_height=“wrap_content”
+    android:layout_marginLeft=“@dimen/job_detail_left_padding”
+    android:layout_marginStart=“@dimen/job_detail_left_padding”
+    android:layout_marginTop=“16dp”
+    android:ellipsize=“end”  
+    android:gravity=“center_vertical”
+    android:maxLines=“1”
+    android:text=”我是很长很长很长很长很长很长很长很长很长的一段文字“
+    android:textColor=”#1A1A1A“
+    android:textSize=”18sp“
+    android:paddingRight=”9dp“
+    card_view:layout_constraintHorizontal_bias=”0.0“这个主要是使得该view中文字靠左显示
+    card_view:layout_constraintLeft_toLeftOf=”parent“ 需要同时指定左侧和右侧链
+    card_view:layout_constraintRight_toLeftOf=”@+id/updateTimeView“
+    card_view:layout_constraintTop_toTopOf="parent"/>
+
+<TextView
+    android:id="@+id/updateTimeView"
+    android:layout_width="wrap_content" 必须是wrap_content，否则会把第一个TextView挤压掉
+    android:layout_height="wrap_content"
+    android:text=”我在后边不想被挤掉"
+    android:textColor="#B3B3B3"
+    android:textSize="@dimen/text_size_12sp"
+    card_view:layout_constraintRight_toRightOf="parent"
+    android:layout_marginRight="@dimen/job_detail_right_padding"
+    card_view:layout_constraintLeft_toLeftOf="@+id/titleView"需要指定左侧链
+    android:layout_marginLeft="8dp"
+    card_view:layout_constraintBaseline_toBaselineOf="@+id/titleView"
+    android:layout_marginEnd="@dimen/job_detail_right_padding"
+    card_view:layout_constraintHorizontal_bias="1.0" />这个主要是使得该view中文字靠右显示
