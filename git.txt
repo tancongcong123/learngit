@@ -10,8 +10,8 @@ git commit error 'Changes not staged for commit:
     在执行commit之前先 执行git add
     或者使用 git commit -am 'XXXXX'
 
-
-    Administrator@REGDHNLUN29FCVN MINGW64 /f/testPy/learngit (master)
+执行commit之前先 执行git add
+Administrator@REGDHNLUN29FCVN MINGW64 /f/testPy/learngit (master)
 $ git add
 Nothing specified, nothing added.
 Maybe you wanted to say 'git add .'?
@@ -40,3 +40,25 @@ Total 4 (delta 1), reused 0 (delta 0)
 remote: Resolving deltas: 100% (1/1), completed with 1 local object.
 To github.com:tancongcong123/learngit.git
    7889ee9..5784b74  master -> master
+
+
+git commit -am 'XXXXX'
+Administrator@REGDHNLUN29FCVN MINGW64 /f/testPy/learngit (master)
+$ git commit -am 'git.txt 2'
+[master 499224d] git.txt 2
+ 1 file changed, 32 insertions(+), 1 deletion(-)
+
+Administrator@REGDHNLUN29FCVN MINGW64 /f/testPy/learngit (master)
+$ git pull
+Already up to date.
+
+Administrator@REGDHNLUN29FCVN MINGW64 /f/testPy/learngit (master)
+$ git push origin master
+Counting objects: 3, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 930 bytes | 930.00 KiB/s, done.
+Total 3 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To github.com:tancongcong123/learngit.git
+   5784b74..499224d  master -> master
