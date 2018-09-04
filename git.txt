@@ -1,0 +1,11 @@
+git push 错误
+error:src refspec master does not match any
+解决方法 先commit在push
+git commit -m 'first commit'
+git push origin master
+
+git commit error 'Changes not staged for commit:
+        modified:   app/src/main/java/com/jx/myktapplication/exec/ExToast.kt
+        modified:   app/src/main/java/com/jx/myktapplication/fragment/home/HomeFragment.kt'
+    在执行commit之前先 执行git add
+    或者使用 git commit -am 'XXXXX'

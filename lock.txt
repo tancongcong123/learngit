@@ -1,0 +1,13 @@
+{"magic":"160323","direct":0,"fcc":"yTwN+lsHyBw=","value":{"account":"140777b5b421000","gateway_code":"B00C500308013A3E"},"msgid":1527237513,"from":3,"type":1011}
+{"from":3,"direct":0,"magic":"160323","msgid":7306447,"fcc":"9XQ6nFsD648=","value":{"account":"140b171b1c21000","gateway_code":"B00C500308013A3E"},"type":1011}
+
+/**
+     * 查询网关
+     *
+     * @param gatewayCode
+     * @return
+     */
+    @FormUrlEncoded
+    @POST("home/device/gatway/queryGatway.do")
+    Flowable<GateQueryResp> queryGateWay(@Field("gatewayCode") String gatewayCode);
+
